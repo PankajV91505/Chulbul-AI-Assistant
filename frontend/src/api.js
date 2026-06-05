@@ -50,10 +50,48 @@ export async function sendVoice(audioBlob, language = 'en', sessionId = '') {
 }
 
 /**
- * Stream text from the /chat/stream SSE endpoint.
- * Calls `onChunk` for each text fragment and `onDone` when complete.
+ * Send an audio blob for instant transcription.
  */
-export async function streamMessage(message, language = 'en', { onChunk, onDone, onError }) {
+export async function transcribeAudio(audioBlob, language = 'en') {
+  const form = new FormData();
+  form.append('audio', audioBlob, 'recording.webm');
+  form.append('language', language);
+
+  const res = await fetch(`${BASE_URL}/transcribe`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(error.detail || 'Transcription failed');
+  }
+
+  return res.json();
+}
+
+/**
+ * Generate TTS audio from text.
+ */
+export async function generateTTS(text, language = 'en') {
+  const res = await fetch(`${BASE_URL}/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, language }),
+  });
+
+  if (!res.ok) {
+    throw new Error('TTS generation failed');
+  }
+
+  return res.json();
+}
+
+/**
+ * Stream text from the /chat/stream SSE endpoint.
+ * Calls `onChunk` for each text fragment, `onTool` for tool status, and `onDone` when complete.
+ */
+export async function streamMessage(message, language = 'en', { onChunk, onTool, onDone, onError }) {
   try {
     const res = await fetch(`${BASE_URL}/chat/stream`, {
       method: 'POST',
@@ -82,7 +120,17 @@ export async function streamMessage(message, language = 'en', { onChunk, onDone,
             onDone?.();
             return;
           }
-          onChunk?.(data);
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'chunk') {
+              onChunk?.(parsed.text);
+            } else if (parsed.type === 'tool_status') {
+              onTool?.(parsed.tool);
+            }
+          } catch (e) {
+            // fallback if not json
+            onChunk?.(data);
+          }
         }
       }
     }

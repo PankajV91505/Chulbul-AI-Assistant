@@ -48,6 +48,20 @@ class ChatResponse(BaseModel):
     session_id: str
 
 
+class TranscribeResponse(BaseModel):
+    text: str
+    language: str
+
+
+class TTSRequest(BaseModel):
+    text: str
+    language: Language = Language.EN
+
+
+class TTSResponse(BaseModel):
+    audio_url: str
+
+
 class HealthResponse(BaseModel):
     """Health-check payload."""
     status: str = "ok"

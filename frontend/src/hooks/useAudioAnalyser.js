@@ -46,7 +46,7 @@ export function useAudioAnalyser(fftSize = 256) {
     }
 
     node.connect(analyserRef.current);
-    analyserRef.current.connect(ctx.destination);
+    // analyserRef.current.connect(ctx.destination); // Do NOT connect mic to speakers (causes feedback/echo)
     sourceRef.current = node;
 
     // Start the analysis loop

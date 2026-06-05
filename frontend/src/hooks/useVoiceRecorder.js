@@ -8,14 +8,16 @@ import { useState, useRef, useCallback } from 'react';
 export function useVoiceRecorder() {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState(null);
+  const [stream, setStream] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
   const startRecording = useCallback(async () => {
     setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setStream(mediaStream);
+      const recorder = new MediaRecorder(mediaStream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
           ? 'audio/webm;codecs=opus'
           : 'audio/webm',
@@ -48,6 +50,7 @@ export function useVoiceRecorder() {
         // Stop all tracks to release the mic
         recorder.stream.getTracks().forEach((t) => t.stop());
         setIsRecording(false);
+        setStream(null);
         resolve(blob);
       };
 
@@ -55,5 +58,5 @@ export function useVoiceRecorder() {
     });
   }, []);
 
-  return { isRecording, startRecording, stopRecording, error };
+  return { isRecording, startRecording, stopRecording, error, stream };
 }

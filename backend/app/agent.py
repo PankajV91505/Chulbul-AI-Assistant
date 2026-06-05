@@ -59,78 +59,21 @@ async def process_input(state: GraphState) -> GraphState:
     return {**state, "user_input": cleaned}
 
 
-# ---------------------------------------------------------------------------
-# Node 2: Route Tool
-# ---------------------------------------------------------------------------
-
-# Keyword patterns used for intent classification
-_SEARCH_PATTERNS = re.compile(
-    r"\b(search|google|find|look up|latest|news|weather|what is|who is|when did)\b",
-    re.IGNORECASE,
-)
-_BROWSER_PATTERNS = re.compile(
-    r"\b(open url|browse|visit|go to|navigate to|open website)\b",
-    re.IGNORECASE,
-)
-_SYSTEM_PATTERNS = re.compile(
-    r"\b(open app|system info|disk usage|time|date|what time|list files|open calculator|open notepad)\b",
-    re.IGNORECASE,
-)
-
-# Map regex → tool name + simple arg extractor
-_SYSTEM_ACTION_MAP: dict[str, str] = {
-    "time": "time",
-    "what time": "time",
-    "date": "date",
-    "system info": "system_info",
-    "disk usage": "disk_usage",
-    "list files": "list_files",
-    "open calculator": "open_app",
-    "open notepad": "open_app",
-    "open app": "open_app",
-}
-
-
 async def route_tool(state: GraphState) -> GraphState:
     """
-    Simple keyword-based intent classifier.
-    A production system would use the LLM for routing — this is a fast heuristic.
+    Uses the LLM to classify user intent into a specific tool and arguments.
     """
+    from app.services.llm import classify_intent
     text = state.get("user_input", "")
-    lower = text.lower()
-
-    # Priority: system > search > browser > direct
-    if _SYSTEM_PATTERNS.search(text):
-        # Determine specific action
-        action = "system_info"
-        tool_args = ""
-        for keyword, act in _SYSTEM_ACTION_MAP.items():
-            if keyword in lower:
-                action = act
-                # Extract app name for open_app
-                if act == "open_app":
-                    for app in ("notepad", "calculator", "explorer", "browser", "cmd", "settings"):
-                        if app in lower:
-                            tool_args = app
-                            break
-                break
-        return {
-            **state,
-            "selected_tool": ToolName.SYSTEM,
-            "tool_args": f"{action}|{tool_args}",
-        }
-
-    if _SEARCH_PATTERNS.search(text):
-        return {**state, "selected_tool": ToolName.WEB_SEARCH, "tool_args": text}
-
-    if _BROWSER_PATTERNS.search(text):
-        # Try to extract a URL
-        url_match = re.search(r"https?://\S+", text)
-        url = url_match.group(0) if url_match else ""
-        return {**state, "selected_tool": ToolName.BROWSER, "tool_args": url}
-
-    # Fallback: direct LLM response, no tool needed
-    return {**state, "selected_tool": ToolName.NONE, "tool_args": ""}
+    
+    logger.info("Classifying intent for: %s", text)
+    intent = await classify_intent(text)
+    
+    return {
+        **state,
+        "selected_tool": intent["tool"],
+        "tool_args": intent["args"],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -174,11 +117,11 @@ async def execute_tool(state: GraphState) -> GraphState:
 
 
 # ---------------------------------------------------------------------------
-# Node 4: Generate Response + TTS
+# Node 4: Generate Response
 # ---------------------------------------------------------------------------
 async def generate(state: GraphState) -> GraphState:
     """
-    Call Groq LLM (with tool context if available), then synthesise audio.
+    Call Groq LLM (with tool context if available).
     """
     if state.get("error"):
         return state
@@ -201,18 +144,10 @@ async def generate(state: GraphState) -> GraphState:
             else "Maaf kijiye, jawab banane mein error aa gaya."
         )
 
-    # Synthesise TTS audio
-    audio_path: str | None = None
-    try:
-        path = await synthesize(llm_text, language=language)
-        audio_path = str(path)
-    except Exception as exc:
-        logger.warning("[generate] TTS failed (non-fatal): %s", exc)
-
     return {
         **state,
         "llm_response": llm_text,
-        "audio_path": audio_path,
+        "audio_path": None,
     }
 
 

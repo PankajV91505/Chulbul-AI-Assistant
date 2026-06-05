@@ -8,12 +8,12 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 logger = logging.getLogger(__name__)
 
-# Maximum results to fetch per query
-MAX_RESULTS = 6
+# Maximum results to fetch per query (reduced for speed)
+MAX_RESULTS = 3
 
 
 async def web_search(query: str, *, max_results: int = MAX_RESULTS) -> str:
