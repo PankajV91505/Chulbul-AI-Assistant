@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────
+   Chulbul AI — Design System
+   ────────────────────────────────────────────────────────────────────── */
+
+/* ── Custom theme tokens ── */
+@theme {
+  --color-chulbul-bg: #0a0a0f;
+  --color-chulbul-surface: #12121a;
+  --color-chulbul-surface-hover: #1a1a28;
+  --color-chulbul-border: #1e1e2e;
+  --color-chulbul-text: #e4e4ed;
+  --color-chulbul-text-muted: #8888a0;
+  --color-chulbul-accent: #7c3aed;
+  --color-chulbul-accent-light: #a78bfa;
+  --color-chulbul-glow: #7c3aed40;
+  --color-chulbul-success: #34d399;
+  --color-chulbul-danger: #f87171;
+}
+
+/* ── Base resets ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--color-chulbul-bg);
+  color: var(--color-chulbul-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-chulbul-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-chulbul-text-muted);
+}
+
+/* ── Glassmorphism card ── */
+.glass-card {
+  background: rgba(18, 18, 26, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 16px;
+}
+
+/* ── Glow button ── */
+.btn-glow {
+  position: relative;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.btn-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4);
+}
+.btn-glow:active {
+  transform: translateY(0);
+}
+
+/* ── Pulse animation for the mic button ── */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* ── Typing indicator ── */
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-chulbul-accent-light);
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
+}
+.typing-dot:nth-child(1) { animation: typing-bounce 1.2s 0s infinite; }
+.typing-dot:nth-child(2) { animation: typing-bounce 1.2s 0.15s infinite; }
+.typing-dot:nth-child(3) { animation: typing-bounce 1.2s 0.3s infinite; }
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Fade-in animation ── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+/* ── Background mesh gradient ── */
+.bg-mesh {
+  background:
+    radial-gradient(at 20% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(109, 40, 217, 0.04) 0%, transparent 60%);
+}

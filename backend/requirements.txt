@@ -1,0 +1,31 @@
+# ──────────────────────────────────────────────
+# Chulbul AI — Python Dependencies
+# Install: pip install -r requirements.txt
+# ──────────────────────────────────────────────
+
+# --- Web framework ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# --- Settings ---
+pydantic-settings>=2.4.0
+
+# --- LLM ---
+groq>=0.9.0
+
+# --- Agent orchestration ---
+langgraph>=0.2.0
+
+# --- Speech-to-Text ---
+faster-whisper>=1.0.0
+
+# --- Text-to-Speech ---
+edge-tts>=6.1.0
+
+# --- Tools ---
+duckduckgo-search>=6.2.0
+playwright>=1.44.0            # optional: run `playwright install chromium`
+
+# --- Utilities ---
+httpx>=0.27.0

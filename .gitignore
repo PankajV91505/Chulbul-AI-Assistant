@@ -1,0 +1,34 @@
+# Byte-compiled / optimised
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment secrets
+.env
+
+# Temp audio
+tmp_audio/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.next/
+
+# Misc
+*.log
+*.sqlite3
