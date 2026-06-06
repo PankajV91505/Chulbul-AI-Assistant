@@ -5,7 +5,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 
-export function useVoiceRecorder() {
+export function useVoiceRecorder(onChunk) {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState(null);
   const [stream, setStream] = useState(null);
@@ -25,7 +25,10 @@ export function useVoiceRecorder() {
 
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+          if (onChunk) onChunk(e.data);
+        }
       };
 
       mediaRecorderRef.current = recorder;

@@ -12,7 +12,7 @@ import ChatInput from './components/ChatInput';
 import { useVoiceRecorder } from './hooks/useVoiceRecorder';
 import { useAudioAnalyser } from './hooks/useAudioAnalyser';
 import { useWakeWord } from './hooks/useWakeWord';
-import { transcribeAudio, generateTTS, streamMessage, getAudioUrl } from './api';
+import { useWebSocketChat } from './hooks/useWebSocketChat';
 
 const SILENCE_THRESHOLD = 5; // Amplitude out of 255
 const SILENCE_DURATION_MS = 4000; // 4 seconds of silence stops recording
@@ -26,8 +26,64 @@ export default function App() {
   const [greetingPlayed, setGreetingPlayed] = useState(false);
   const [toolStatus, setToolStatus] = useState('');
 
+  // ── WebSocket Integration ──
+  const userMsgIdRef = useRef(null);
+  const assistantMsgIdRef = useRef(null);
+  const currentAssistantTextRef = useRef('');
+
+  const { isConnected, sendAudioChunk, startInteraction, stopInteraction, sendText } = useWebSocketChat({
+    language,
+    onTranscript: (text) => {
+      if (userMsgIdRef.current) {
+        setMessages((prev) => prev.map((msg) => msg.id === userMsgIdRef.current ? { ...msg, text } : msg));
+      }
+      setIsLoading(true);
+      // Create assistant message placeholder
+      assistantMsgIdRef.current = addMessage('assistant', '');
+      currentAssistantTextRef.current = '';
+    },
+    onToolStatus: (toolName) => {
+      setToolStatus(`Executing tool: ${toolName}...`);
+    },
+    onChunk: (textChunk) => {
+      if (assistantMsgIdRef.current) {
+        updateMessage(assistantMsgIdRef.current, textChunk);
+        currentAssistantTextRef.current += textChunk;
+      }
+    },
+    onDone: () => {
+      setIsLoading(false);
+      setToolStatus('');
+      // Play TTS for the full response natively
+      const text = currentAssistantTextRef.current.trim();
+      if (text) {
+        try {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = language === 'en' ? 'en-US' : 'hi-IN';
+          utterance.pitch = 1.1;
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.error("Native TTS Error:", e);
+        }
+      }
+      userMsgIdRef.current = null;
+      assistantMsgIdRef.current = null;
+    },
+    onError: (errMsg) => {
+      setIsLoading(false);
+      setToolStatus('');
+      if (assistantMsgIdRef.current) {
+         updateMessage(assistantMsgIdRef.current, `\n\n[Error: ${errMsg}]`);
+      } else if (userMsgIdRef.current) {
+         setMessages((prev) => prev.map((msg) => msg.id === userMsgIdRef.current ? { ...msg, text: `🎤 [Error: ${errMsg}]` } : msg));
+      }
+      userMsgIdRef.current = null;
+      assistantMsgIdRef.current = null;
+    }
+  });
+
   // ── Hooks ──
-  const { isRecording, startRecording, stopRecording, stream: micStream } = useVoiceRecorder();
+  const { isRecording, startRecording, stopRecording, stream: micStream } = useVoiceRecorder(sendAudioChunk);
   const { frequencyData, connect, disconnect } = useAudioAnalyser();
 
   // ── Refs ──
@@ -77,109 +133,28 @@ export default function App() {
     }
   }, [greetingPlayed, language, addMessage]);
 
-  const playAudioUrl = useCallback((audioUrl) => {
-    if (!audioUrl) return;
-    const fullUrl = getAudioUrl(audioUrl);
-    if (!fullUrl) return;
-
-    const audio = new Audio(fullUrl);
-    audioRef.current = audio;
-
-    audio.addEventListener('canplaythrough', () => {
-      audio.play().catch(() => {});
-      try { connect(audio); } catch {}
-    });
-
-    audio.addEventListener('ended', () => {
-      disconnect();
-    });
-  }, [connect, disconnect]);
-
-  // ── Streaming Chat Handler ──
-  const handleStreamingChat = useCallback(async (userText) => {
-    setIsLoading(true);
-    setToolStatus('');
-    const assistantMsgId = addMessage('assistant', '');
-
-    let fullAssistantText = '';
-
-    await streamMessage(userText, language, {
-      onChunk: (chunk) => {
-        updateMessage(assistantMsgId, chunk);
-        fullAssistantText += chunk;
-      },
-      onTool: (toolName) => {
-        setToolStatus(`Executing tool: ${toolName}...`);
-      },
-      onDone: async () => {
-        setIsLoading(false);
-        setToolStatus('');
-        // Generate TTS for the final text asynchronously
-        if (fullAssistantText.trim()) {
-          try {
-            const ttsRes = await generateTTS(fullAssistantText, language);
-            if (ttsRes.audio_url) {
-              playAudioUrl(ttsRes.audio_url);
-            }
-          } catch (e) {
-            console.error("TTS Error:", e);
-          }
-        }
-      },
-      onError: (err) => {
-        setIsLoading(false);
-        setToolStatus('');
-        updateMessage(assistantMsgId, `\n\n[Error: ${err.message}]`);
-      }
-    });
-  }, [language, addMessage, updateMessage, playAudioUrl]);
-
-  const handleSend = useCallback(async (text) => {
+  const handleSend = useCallback((text) => {
     if (!greetingPlayed) setGreetingPlayed(true);
-    addMessage('user', text);
-    await handleStreamingChat(text);
-  }, [greetingPlayed, addMessage, handleStreamingChat]);
+    // Directly send text via WebSocket!
+    userMsgIdRef.current = addMessage('user', text);
+    sendText(text);
+  }, [greetingPlayed, sendText, addMessage]);
 
   // ── Voice & Silence Detection ──
   const handleMicToggle = useCallback(async (forceStart = false) => {
     if (!greetingPlayed) setGreetingPlayed(true);
     if (isRecording && !forceStart) {
       // Manual stop
-      const blob = await stopRecording();
+      stopInteraction();
+      await stopRecording();
       if (silenceIntervalRef.current) clearInterval(silenceIntervalRef.current);
-      if (!blob) return;
-      
-      processAudioBlob(blob);
     } else if (!isRecording) {
       // Start recording
+      startInteraction();
+      userMsgIdRef.current = addMessage('user', '🎤 [Listening...]');
       await startRecording();
     }
-  }, [greetingPlayed, isRecording, startRecording, stopRecording]);
-
-  const processAudioBlob = async (blob) => {
-    const tempMsgId = addMessage('user', '🎤 [Transcribing...]');
-    setIsLoading(true);
-
-    try {
-      // Fast transcription
-      const res = await transcribeAudio(blob, language);
-      // Replace transcription text
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === tempMsgId ? { ...msg, text: res.text } : msg
-        )
-      );
-      // Start streaming response
-      await handleStreamingChat(res.text);
-    } catch (err) {
-      setIsLoading(false);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === tempMsgId ? { ...msg, text: `🎤 [Error: ${err.message}]` } : msg
-        )
-      );
-    }
-  };
+  }, [greetingPlayed, isRecording, startRecording, stopRecording, startInteraction, stopInteraction, addMessage]);
 
   // ── Silence Detection ──
   const SILENCE_THRESHOLD = 0.15; // 0..1 scale (increased to tolerate background noise)
@@ -205,9 +180,11 @@ export default function App() {
             // Silence detected for 2.5 seconds! Auto-stop.
             console.log("Silence detected! Stopping recording...");
             clearInterval(silenceIntervalRef.current);
-            stopRecording().then((blob) => {
-              if (blob) processAudioBlob(blob);
-            });
+            stopInteraction();
+            stopRecording();
+            if (userMsgIdRef.current) {
+              setMessages((prev) => prev.map((msg) => msg.id === userMsgIdRef.current ? { ...msg, text: '🎤 [Processing...]' } : msg));
+            }
           }
         } else {
           // Voice detected, reset silence timer

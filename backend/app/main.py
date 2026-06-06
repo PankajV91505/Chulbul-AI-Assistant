@@ -19,7 +19,7 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
@@ -198,6 +198,110 @@ async def chat_stream(req: ChatRequest):
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@app.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket):
+    """
+    Ultra-Low Latency WebSocket endpoint.
+    Receives audio chunks, runs STT, executes tools, and streams LLM output.
+    """
+    await websocket.accept()
+    
+    session_id = generate_session_id()
+    language = "en"
+    audio_buffer = bytearray()
+    
+    try:
+        while True:
+            message = await websocket.receive()
+            
+            if "bytes" in message:
+                audio_buffer.extend(message["bytes"])
+                
+            elif "text" in message:
+                data = json.loads(message["text"])
+                msg_type = data.get("type")
+                
+                if msg_type == "start":
+                    language = data.get("language", "en")
+                    audio_buffer = bytearray()
+                    
+                elif msg_type == "stop":
+                    # User stopped talking, process audio buffer instantly!
+                    if not audio_buffer:
+                        await websocket.send_json({"type": "error", "message": "No audio received"})
+                        continue
+                        
+                    # Save to temp file for faster-whisper
+                    suffix = ".webm"
+                    temp_path = TEMP_AUDIO_DIR / f"ws_{uuid.uuid4().hex[:8]}{suffix}"
+                    temp_path.write_bytes(audio_buffer)
+                    
+                    try:
+                        # Transcribe
+                        transcribed_text, detected_lang = transcribe(str(temp_path))
+                        
+                        if not transcribed_text:
+                            await websocket.send_json({"type": "error", "message": "Could not transcribe audio"})
+                            continue
+                            
+                        lang = detected_lang if detected_lang in ("en", "hi") else language
+                        await websocket.send_json({"type": "transcript", "text": transcribed_text})
+                    finally:
+                        if temp_path.exists():
+                            temp_path.unlink(missing_ok=True)
+                            
+                elif msg_type == "text_input":
+                    transcribed_text = data.get("text", "")
+                    lang = data.get("language", "en")
+                    if not transcribed_text:
+                        continue
+                        
+                else:
+                    continue
+
+                # Run Intent Routing & Tool Execution for both 'stop' and 'text_input'
+                if msg_type in ("stop", "text_input"):
+                    try:
+                        from app.agent import process_input, route_tool, execute_tool, GraphState
+                        state: GraphState = {
+                            "user_input": transcribed_text,
+                            "language": lang,
+                            "session_id": session_id,
+                            "selected_tool": ToolName.NONE,
+                        }
+                        
+                        state = await process_input(state)
+                        state = await route_tool(state)
+                        tool = state.get("selected_tool", ToolName.NONE)
+                        
+                        if tool != ToolName.NONE:
+                            tool_name = tool.replace("_", " ").title()
+                            await websocket.send_json({"type": "tool_status", "tool": tool_name})
+                            state = await execute_tool(state)
+                            
+                        # Stream LLM Response
+                        context = state.get("tool_result", "")
+                        async for chunk in generate_response_stream(
+                            state["user_input"], language=lang, context=context
+                        ):
+                            await websocket.send_json({"type": "chunk", "text": chunk})
+                            
+                        await websocket.send_json({"type": "done"})
+                        
+                    except Exception as e:
+                        logger.error("Processing error: %s", e)
+                        await websocket.send_json({"type": "error", "message": str(e)})
+                            
+    except WebSocketDisconnect:
+        logger.info("WebSocket disconnected")
+    except Exception as exc:
+        logger.error("WebSocket error: %s", exc)
+        try:
+            await websocket.close()
+        except:
+            pass
 
 
 @app.post("/chat", response_model=ChatResponse, tags=["chat"])
