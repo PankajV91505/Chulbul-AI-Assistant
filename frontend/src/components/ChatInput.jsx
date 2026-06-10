@@ -24,9 +24,11 @@ export default function ChatInput({ onSend, onMicToggle, isRecording, disabled }
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-center gap-2 p-3 glass-card"
+      className="flex items-center gap-3 p-3 bg-black/50 border border-chulbul-border/50 relative"
       id="chat-input-form"
     >
+      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-chulbul-border -mt-0.5 -ml-0.5"></div>
+      <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-chulbul-border -mb-0.5 -mr-0.5"></div>
       {/* Mic button */}
       <button
         type="button"
@@ -60,15 +62,16 @@ export default function ChatInput({ onSend, onMicToggle, isRecording, disabled }
       </button>
 
       {/* Text input */}
+      <div className="text-chulbul-accent font-bold">&gt;</div>
       <input
         ref={inputRef}
         type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={disabled}
-        placeholder={isRecording ? 'Listening…' : 'Type a message…'}
+        placeholder={isRecording ? 'Listening…' : 'Enter command…'}
         className="flex-1 bg-transparent border-none outline-none text-sm text-chulbul-text
-                   placeholder:text-chulbul-text-muted"
+                   placeholder:text-chulbul-border font-mono tracking-widest uppercase"
         id="chat-text-input"
       />
 

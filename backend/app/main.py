@@ -113,7 +113,7 @@ async def transcribe_audio(
         temp_path.write_bytes(content)
 
         # Transcribe
-        transcribed_text, detected_lang = transcribe(str(temp_path))
+        transcribed_text, detected_lang = transcribe(str(temp_path), language=language)
         if not transcribed_text:
             raise HTTPException(
                 status_code=400,
@@ -239,8 +239,8 @@ async def websocket_chat(websocket: WebSocket):
                     temp_path.write_bytes(audio_buffer)
                     
                     try:
-                        # Transcribe
-                        transcribed_text, detected_lang = transcribe(str(temp_path))
+                        # Transcribe with predefined language to avoid auto-detect delay
+                        transcribed_text, detected_lang = transcribe(str(temp_path), language=language)
                         
                         if not transcribed_text:
                             await websocket.send_json({"type": "error", "message": "Could not transcribe audio"})
@@ -344,7 +344,7 @@ async def voice(
         content = await audio.read()
         temp_path.write_bytes(content)
 
-        transcribed_text, detected_lang = transcribe(str(temp_path))
+        transcribed_text, detected_lang = transcribe(str(temp_path), language=language)
         if not transcribed_text:
             raise HTTPException(status_code=400, detail="Could not transcribe")
 

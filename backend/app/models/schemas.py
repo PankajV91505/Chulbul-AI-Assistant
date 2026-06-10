@@ -24,6 +24,7 @@ class ToolName(str, Enum):
     WEB_SEARCH = "web_search"
     BROWSER = "browser_automation"
     SYSTEM = "system_task"
+    INTERPRETER = "interpreter_task"
     NONE = "direct_response"
 
 

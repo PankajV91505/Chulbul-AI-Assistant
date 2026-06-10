@@ -59,9 +59,9 @@ function AnimatedSphere({ frequencyData, isActive }) {
       <icosahedronGeometry args={[1.4, 20]} />
       <MeshDistortMaterial
         ref={materialRef}
-        color="#7c3aed"
-        emissive="#4c1d95"
-        emissiveIntensity={0.4}
+        color="#ff007f"
+        emissive="#ff0033"
+        emissiveIntensity={0.6}
         roughness={0.2}
         metalness={0.8}
         distort={0.15}
@@ -89,9 +89,9 @@ function GlowRing({ isActive }) {
     <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
       <torusGeometry args={[2.0, 0.015, 16, 100]} />
       <meshBasicMaterial
-        color={isActive ? '#a78bfa' : '#4c1d95'}
+        color={isActive ? '#ff3399' : '#ff0033'}
         transparent
-        opacity={isActive ? 0.6 : 0.25}
+        opacity={isActive ? 0.8 : 0.4}
       />
     </mesh>
   );
@@ -130,7 +130,7 @@ function Particles({ count = 80 }) {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.02} color="#a78bfa" transparent opacity={0.5} />
+      <pointsMaterial size={0.02} color="#ff3399" transparent opacity={0.7} />
     </points>
   );
 }
@@ -141,8 +141,8 @@ export default function VoiceOrb3D({ frequencyData, isActive }) {
     <div className="w-full h-full" id="voice-orb-canvas">
       <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
         <ambientLight intensity={0.3} />
-        <directionalLight position={[5, 5, 5]} intensity={0.8} color="#e9d5ff" />
-        <pointLight position={[-3, -3, -3]} intensity={0.5} color="#7c3aed" />
+        <directionalLight position={[5, 5, 5]} intensity={0.8} color="#ff99cc" />
+        <pointLight position={[-3, -3, -3]} intensity={0.5} color="#ff007f" />
 
         <AnimatedSphere frequencyData={frequencyData} isActive={isActive} />
         <GlowRing isActive={isActive} />

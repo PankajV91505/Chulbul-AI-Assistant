@@ -24,6 +24,7 @@ from app.services.tts import synthesize
 from app.tools.search import web_search
 from app.tools.browser import browse_url
 from app.tools.system_control import run_system_task
+from app.tools.interpreter_tool import run_interpreter
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,9 @@ async def execute_tool(state: GraphState) -> GraphState:
             action = parts[0].strip()
             extra = parts[1].strip() if len(parts) > 1 else ""
             result = await run_system_task(action, args=extra)
+
+        elif tool == ToolName.INTERPRETER:
+            result = await run_interpreter(args)
 
         else:
             result = ""

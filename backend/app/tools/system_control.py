@@ -26,6 +26,7 @@ ALLOWED_ACTIONS = {
     "system_info",
     "disk_usage",
     "open_app",
+    "open_url",
     "screenshot",
     "list_files",
 }
@@ -99,6 +100,15 @@ async def run_system_task(action: str, *, args: str = "") -> str:
             subprocess.Popen(cmd, shell=True)
             logger.info("Opened app: %s → %s", app_key, cmd)
             return f"Opened {app_key} successfully."
+
+        if action == "open_url":
+            import webbrowser
+            url = args.strip()
+            if not url.startswith("http"):
+                url = "https://" + url
+            webbrowser.open(url)
+            logger.info("Opened URL visually in default browser: %s", url)
+            return f"Opened {url} in your default browser."
 
         if action == "list_files":
             target = Path(args.strip()) if args.strip() else Path.home() / "Desktop"

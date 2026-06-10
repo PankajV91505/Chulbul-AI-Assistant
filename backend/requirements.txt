@@ -29,3 +29,4 @@ playwright>=1.44.0            # optional: run `playwright install chromium`
 
 # --- Utilities ---
 httpx>=0.27.0
+open-interpreter>=0.1.13

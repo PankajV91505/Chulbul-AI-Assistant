@@ -47,12 +47,13 @@ def _get_model():
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
-def transcribe(audio_path: str | Path) -> tuple[str, Optional[str]]:
+def transcribe(audio_path: str | Path, language: str = None) -> tuple[str, Optional[str]]:
     """
     Transcribe an audio file to text.
 
     Args:
         audio_path: Path to a WAV / MP3 / WEBM file.
+        language:   Optional language code ("en", "hi") to skip auto-detection.
 
     Returns:
         A tuple of (transcribed_text, detected_language_code).
@@ -63,7 +64,8 @@ def transcribe(audio_path: str | Path) -> tuple[str, Optional[str]]:
     try:
         segments, info = model.transcribe(
             str(audio_path),
-            beam_size=5,
+            language=language if language in ("en", "hi") else None,
+            beam_size=1,               # Faster greedy decoding
             vad_filter=True,           # skip silence
             vad_parameters=dict(
                 min_silence_duration_ms=500,

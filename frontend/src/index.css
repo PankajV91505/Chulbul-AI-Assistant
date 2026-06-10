@@ -1,22 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────────────────
-   Chulbul AI — Design System
+   Chulbul AI — Cyber HUD Design System
    ────────────────────────────────────────────────────────────────────── */
 
 /* ── Custom theme tokens ── */
 @theme {
-  --color-chulbul-bg: #0a0a0f;
-  --color-chulbul-surface: #12121a;
-  --color-chulbul-surface-hover: #1a1a28;
-  --color-chulbul-border: #1e1e2e;
-  --color-chulbul-text: #e4e4ed;
-  --color-chulbul-text-muted: #8888a0;
-  --color-chulbul-accent: #7c3aed;
-  --color-chulbul-accent-light: #a78bfa;
-  --color-chulbul-glow: #7c3aed40;
-  --color-chulbul-success: #34d399;
-  --color-chulbul-danger: #f87171;
+  --color-chulbul-bg: #030005;
+  --color-chulbul-surface: #0a000f;
+  --color-chulbul-surface-hover: #15001a;
+  --color-chulbul-border: #ff007f;
+  --color-chulbul-text: #ff99cc;
+  --color-chulbul-text-muted: #ff007f;
+  --color-chulbul-accent: #ff007f;
+  --color-chulbul-accent-light: #ff3399;
+  --color-chulbul-glow: rgba(255, 0, 127, 0.4);
+  --color-chulbul-success: #00ffcc;
+  --color-chulbul-danger: #ff0033;
 }
 
 /* ── Base resets ── */
@@ -33,11 +34,17 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Share Tech Mono', monospace;
   background: var(--color-chulbul-bg);
   color: var(--color-chulbul-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 /* ── Scrollbar ── */
@@ -55,33 +62,72 @@ body {
   background: var(--color-chulbul-text-muted);
 }
 
-/* ── Glassmorphism card ── */
-.glass-card {
-  background: rgba(18, 18, 26, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(124, 58, 237, 0.15);
-  border-radius: 16px;
+/* ── HUD Panel (Glassmorphism + Neon Border) ── */
+.hud-panel {
+  background: rgba(10, 0, 15, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-chulbul-border);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.2), inset 0 0 10px rgba(255, 0, 127, 0.1);
+  position: relative;
+}
+
+/* Add corner brackets for HUD feel */
+.hud-panel::before, .hud-panel::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--color-chulbul-accent-light);
+  pointer-events: none;
+}
+.hud-panel::before {
+  top: -2px; left: -2px;
+  border-right: none; border-bottom: none;
+}
+.hud-panel::after {
+  bottom: -2px; right: -2px;
+  border-left: none; border-top: none;
+}
+
+.hud-panel-title {
+  border-bottom: 1px solid var(--color-chulbul-border);
+  padding: 8px 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-chulbul-accent-light);
+  letter-spacing: 3px;
+  text-shadow: 0 0 5px var(--color-chulbul-glow);
+  background: linear-gradient(90deg, rgba(255,0,127,0.2) 0%, transparent 100%);
+}
+
+.neon-text {
+  text-shadow: 0 0 5px var(--color-chulbul-glow), 0 0 10px var(--color-chulbul-glow);
 }
 
 /* ── Glow button ── */
 .btn-glow {
   position: relative;
-  background: linear-gradient(135deg, #7c3aed, #a78bfa);
-  border: none;
-  border-radius: 12px;
-  color: white;
+  background: transparent;
+  border: 1px solid var(--color-chulbul-accent);
+  color: var(--color-chulbul-text);
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   overflow: hidden;
+  box-shadow: inset 0 0 5px var(--color-chulbul-glow);
 }
 .btn-glow:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4);
+  background: var(--color-chulbul-glow);
+  color: #fff;
+  box-shadow: 0 0 15px var(--color-chulbul-glow), inset 0 0 10px var(--color-chulbul-accent);
 }
 .btn-glow:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 /* ── Pulse animation for the mic button ── */
@@ -118,7 +164,7 @@ body {
 
 /* ── Gradient text ── */
 .gradient-text {
-  background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%);
+  background: linear-gradient(135deg, #ff99cc 0%, #ff007f 50%, #ff0033 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -139,10 +185,12 @@ body {
   animation: fade-in-up 0.4s ease-out forwards;
 }
 
-/* ── Background mesh gradient ── */
+/* ── Background grid ── */
 .bg-mesh {
-  background:
-    radial-gradient(at 20% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-    radial-gradient(at 80% 20%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(109, 40, 217, 0.04) 0%, transparent 60%);
+  background-color: var(--color-chulbul-bg);
+  background-image: 
+    linear-gradient(rgba(255, 0, 127, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: center center;
 }

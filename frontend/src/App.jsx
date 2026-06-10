@@ -228,10 +228,68 @@ export default function App() {
       <Header language={language} onLanguageChange={setLanguage} />
 
       {/* Main content area */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 overflow-hidden relative">
         
-        {/* 3D Orb panel - Made larger and more prominent */}
-        <section className="h-[40vh] lg:h-full lg:w-[50%] flex-shrink-0 relative flex items-center justify-center bg-gradient-to-r from-transparent to-black/20">
+        {/* Left Panel: System Status (Static for visual HUD) */}
+        <section className="hidden lg:flex col-span-3 hud-panel rounded-lg flex-col p-4 space-y-6 overflow-y-auto">
+          <div className="hud-panel-title">SYSTEM TRACKING</div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs text-chulbul-text-muted">
+              <span>CPU LOAD</span>
+              <span>42%</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-chulbul-accent w-[42%] shadow-[0_0_10px_#ff007f]"></div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs text-chulbul-text-muted">
+              <span>MEMORY</span>
+              <span>18GB / 32GB</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-chulbul-accent-light w-[56%] shadow-[0_0_10px_#ff3399]"></div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs text-chulbul-text-muted">
+              <span>NETWORK TX/RX</span>
+              <span>1.2MB/s</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-chulbul-success w-[20%] shadow-[0_0_10px_#00ffcc]"></div>
+            </div>
+          </div>
+          
+          <div className="mt-8 border-t border-white/10 pt-4">
+             <div className="text-xs text-chulbul-text-muted mb-2">ACTIVE SENSORS</div>
+             <div className="flex flex-col gap-2">
+               <div className="flex items-center gap-2 text-sm text-chulbul-text">
+                 <span className="w-2 h-2 rounded-full bg-chulbul-success shadow-[0_0_5px_#00ffcc]"></span> Mic Input
+               </div>
+               <div className="flex items-center gap-2 text-sm text-chulbul-text">
+                 <span className="w-2 h-2 rounded-full bg-chulbul-success shadow-[0_0_5px_#00ffcc]"></span> TTS Engine
+               </div>
+               <div className="flex items-center gap-2 text-sm text-chulbul-text">
+                 <span className="w-2 h-2 rounded-full bg-chulbul-success shadow-[0_0_5px_#00ffcc]"></span> WebSocket Core
+               </div>
+             </div>
+          </div>
+        </section>
+        
+        {/* 3D Orb panel - Center */}
+        <section className="h-[40vh] lg:h-full lg:col-span-6 hud-panel rounded-lg relative flex flex-col items-center justify-center border-2 border-chulbul-border bg-black/40">
+          
+          {/* Top Title Bar of Center Panel */}
+          <div className="absolute top-0 w-full flex justify-between items-center p-4 border-b border-white/10 bg-gradient-to-r from-transparent via-chulbul-border/20 to-transparent">
+             <div className="text-chulbul-text-muted text-xs">VOICE NODE ACTIVE</div>
+             <h1 className="text-4xl font-rajdhani font-bold tracking-[0.5em] text-chulbul-text neon-text">CHULBUL</h1>
+             <div className="text-chulbul-text-muted text-xs">ONLINE</div>
+          </div>
+
           <VoiceOrb3D
             frequencyData={frequencyData}
             isActive={isRecording || isLoading}
@@ -260,10 +318,12 @@ export default function App() {
           </div>
         </section>
 
-        {/* Chat panel */}
-        <section className="flex-1 flex flex-col min-h-0 border-l border-white/5 bg-black/40 backdrop-blur-3xl z-10 shadow-2xl">
+        {/* Chat panel - Right */}
+        <section className="flex-1 lg:col-span-3 hud-panel rounded-lg flex flex-col min-h-0 bg-black/60 z-10 shadow-2xl">
+          <div className="hud-panel-title text-right">COMMUNICATION LINK</div>
+          
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-8 space-y-4 scrollbar-thin" id="chat-messages">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin" id="chat-messages">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center gap-4 opacity-60">
                 <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-chulbul-accent/30 to-purple-500/20 flex items-center justify-center border border-white/10">
@@ -314,7 +374,7 @@ export default function App() {
           </div>
 
           {/* Input bar */}
-          <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="p-4 border-t border-chulbul-border/30 bg-black/40">
             <ChatInput
               onSend={handleSend}
               onMicToggle={handleMicToggle}
